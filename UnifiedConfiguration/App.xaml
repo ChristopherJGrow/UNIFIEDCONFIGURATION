@@ -1,0 +1,11 @@
+﻿<Application x:Class="UnifiedConfiguration.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:UnifiedConfiguration"
+             xmlns:coreWPF="clr-namespace:Config.Core.WPF.Converter;assembly=Core.WPF"
+             >
+    <!--StartupUri="MainWindow.xaml">-->
+    <Application.Resources>
+        <coreWPF:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageConverter" />
+    </Application.Resources>
+</Application>

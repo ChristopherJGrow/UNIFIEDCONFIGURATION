@@ -1,0 +1,180 @@
+﻿<Window x:Class="UnifiedConfiguration.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        
+        
+        xmlns:local = "clr-namespace:UnifiedConfiguration"
+        
+        
+        mc:Ignorable="d"
+
+        Icon="{Binding WindowIcon, Converter={StaticResource ByteArrayToImageConverter}}"
+        
+
+        Title="{Binding WindowTitle}" Height="582" Width="945"
+
+        >
+
+    <!--xmlns:corew = "clr-namespace:Config.Core.WPF.Behaviors"-->
+    
+    <!--<Window.Resources>
+        <coreWPF:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageConverter" />
+    </Window.Resources>-->
+
+    <!--Icon="{Binding WindowIcon, Converter={StaticResource ByteArrayToImageConverter}}"-->
+    <!--Icon="pack://application:,,,/UnifiedConfigurationImage.png"-->
+
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="6,6,6,6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28"/>
+            <RowDefinition Height="28"/>
+            <RowDefinition Height="28"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="32"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+            <CheckBox Content="Is App Admin" IsChecked="{Binding IsAppAdmin, Mode=TwoWay}" IsEnabled="False"  HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0"/>
+
+            <TextBlock VerticalAlignment="Center" Text="New Item Type" Margin="12,0,0,0"/>
+            <ComboBox  VerticalAlignment="Center" Width="120" Height="24"  HorizontalAlignment="Left" HorizontalContentAlignment="Left" Text="New Item Type" ItemsSource="{Binding NewItemTypeSource}" SelectedItem ="{Binding NewItemTypeSelection}" Margin="4,0,0,0"/>
+
+            <TextBlock VerticalAlignment="Center" Text="Environment" Margin="12,0,0,0"/>
+            <ComboBox  VerticalAlignment="Center" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Text="Enviorment Type" ItemsSource="{Binding EnvironmentSource}" SelectedItem ="{Binding EnvironmentSelection}" Margin="4,0,0,0"/>
+            <!--<TextBlock VerticalAlignment="Center" Text="{Binding Environment}" Margin="4,0,0,0"/>-->
+            
+            
+            <TextBlock VerticalAlignment="Center" Text="Application" Margin="12,0,0,0"/>
+            <TextBox   VerticalAlignment="Center" Text="{Binding Application}" Margin="4,0,0,0" Width="120"/>
+
+            <TextBlock VerticalAlignment="Center" Text="Module" Margin="12,0,0,0"/>
+            <TextBox VerticalAlignment="Center" Text="{Binding Module}" Margin="4,0,0,0" Width="120"/>
+            
+        </StackPanel>
+      
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+
+
+
+
+            <TextBlock VerticalAlignment="Center" Text="BuildNumber" Margin="12,0,0,0"  IsEnabled="{Binding IsUnfilteredInverse, Mode=OneWay}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground"
+                    Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+                        <Style.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground"
+                            Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBox VerticalAlignment="Center" Text="{Binding BuildNumber}" Margin="4,0,0,0" Width="40" IsEnabled="{Binding IsUnfilteredInverse, Mode=OneWay}"/>
+
+            <CheckBox Content="Show All Unfiltered" IsChecked="{Binding IsUnfiltered }" VerticalAlignment="Center" Margin="6,0,0,0"/>
+
+        </StackPanel>
+
+        <Grid Grid.Row="2" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Text="Variable Filter" Margin="0,0,4,0"/>
+            <TextBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" Text="{Binding FilterVariable, UpdateSourceTrigger=PropertyChanged, Delay=250}" />
+
+            <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Text="Value Filter" Margin="0,0,4,0"/>
+            <TextBox Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Stretch" Text="{Binding FilterValue, UpdateSourceTrigger=PropertyChanged, Delay=250  }"  />
+
+        </Grid>
+
+        <!-- DataGridBehaviors -  ensure a command is executed when a new row is inserted to set default values-->
+        <DataGrid   Grid.Row="3"
+
+                    CanUserAddRows="True"
+                    CanUserDeleteRows="True"
+                    CanUserReorderColumns="True"
+                    CanUserSortColumns="True"
+                    CanUserResizeColumns="True"
+                    CanUserResizeRows="True"                                        
+                    SelectedItem="{Binding ItemSelected,TargetNullValue={x:Static CollectionView.NewItemPlaceholder},  Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    ItemsSource="{Binding ItemSource}"
+                    HorizontalAlignment="Stretch"
+                    AutoGenerateColumns="False"                    
+                    local:DataGridBehaviors.InitializingNewItemCommand="{Binding CmdRowAdd}"
+                    
+                  >
+            
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="" Binding="{Binding IsDirtyString}" Width="3" IsReadOnly="True" >
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Foreground" Value="Purple"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn Header="Module" Binding="{Binding Module}" Width="80" IsReadOnly="False"/>
+                <DataGridTextColumn Header="Section" Binding="{Binding Section}" Width="180" IsReadOnly="False"/>
+                <DataGridTextColumn Header="Variable" Binding="{Binding Variable}" Width="180" IsReadOnly="False"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="180" IsReadOnly="False"/>
+                <DataGridTextColumn Header="BuildNumber" Binding="{Binding BuildNumber}" Width="100" IsReadOnly="False"/>
+                <DataGridTextColumn Header="UserPretty" Binding="{Binding UserPretty}" Width="200" IsReadOnly="True"/>
+                <DataGridTextColumn Header="UserId" Binding="{Binding UserId}" Width="200" IsReadOnly="True"/>
+                
+                
+                
+
+
+                <!--<DataGridTemplateColumn  Header="Attribute" Width="180">-->
+
+                <!--<DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Key,Converter={StaticResource StringTrimConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>-->
+                <!--<DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox   Height="22"
+                              IsEditable="true"   
+                              IsTextSearchEnabled="True" 
+                              Text="{Binding Key, Mode=TwoWay}"
+                              ItemsSource="{Binding Owner.KnownAttributeKeys}"   
+                              SelectedItem="{Binding Key, Mode=TwoWay}"
+                              />
+                        </DataTemplate>
+
+                    </DataGridTemplateColumn.CellEditingTemplate>-->
+                <!--</DataGridTemplateColumn >-->
+            </DataGrid.Columns>
+            
+            <DataGrid.ContextMenu>
+
+                <ContextMenu x:Name="ContextMenu"  StaysOpen="true">
+
+
+                    <MenuItem Header="{Binding CmdGridCut.Text}"   InputGestureText="{Binding CmdGridCut.GestureText}" CommandParameter="{Binding Self}" Command="{Binding CmdGridCut, IsAsync=True}" IsEnabled="{Binding ItemSelected.IsUserOverride}"        />
+                    <MenuItem Header="{Binding CmdGridCopy.Text}"  InputGestureText="{Binding CmdGridCopy.GestureText}" CommandParameter="{Binding Self}" Command="{Binding CmdGridCopy, IsAsync=True}"        />
+                    <MenuItem Header="{Binding CmdGridPaste.Text}" InputGestureText="{Binding CmdGridPaste.GestureText}" CommandParameter="{Binding Self}" Command="{Binding CmdGridPaste, IsAsync=True}"        />
+
+                    <MenuItem Header="{Binding CmdDeleteRow.Text}" InputGestureText="{Binding CmdDeleteRow.GestureText}" CommandParameter="{Binding Self}" Command="{Binding CmdDeleteRow, IsAsync=True}" IsEnabled="{Binding ItemSelected.IsDeletable}"        />
+                    
+                </ContextMenu>
+                        
+            </DataGrid.ContextMenu>
+        </DataGrid>
+
+
+        <Button Grid.Row="4" Command="{Binding CmdRemoteSave}" Content="{Binding CmdRemoteSave.Text}" CommandParameter="{Binding Self}"  Width="80" Height="24" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Right" />
+    </Grid>
+</Window>

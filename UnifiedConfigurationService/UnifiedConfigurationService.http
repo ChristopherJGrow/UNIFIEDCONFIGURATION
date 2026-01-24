@@ -1,0 +1,6 @@
+@UnifiedConfigurationService_HostAddress = http://localhost:5191
+
+GET {{UnifiedConfigurationService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
