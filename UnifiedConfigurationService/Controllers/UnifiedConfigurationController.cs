@@ -186,9 +186,12 @@ namespace UnifiedConfigurationService.Controllers
             var app = User.FindFirstValue( UcsClaimTypes.Application );
             //var mod = User.FindFirstValue( UcsClaimTypes.Module );
             //var ver = User.FindFirstValue( UcsClaimTypes.BuildNumber );
-            var uid = User.FindFirstValue( UcsClaimTypes.UserId );
+            //var uid = User.FindFirstValue( UcsClaimTypes.UserId );
 
-            return Results.Ok(ConfigResolver.Instance.SetUserSetting( env, app, uid, body ));
+            // The reason we don't use the Token's user id is because you could be
+            // using an editor and updating someone elses account
+            //
+            return Results.Ok(ConfigResolver.Instance.SetUserSetting( env, app,  body ));
 
             //var section = body.Section;
             //var variable = body.Variable;
@@ -219,12 +222,9 @@ namespace UnifiedConfigurationService.Controllers
             //var ver = User.FindFirstValue( UcsClaimTypes.BuildNumber );
             
             var isDefaultAuth = User.FindFirstValue( UcsClaimTypes.IsDefaultAuth )?.ToBool()??false;
-
-            if (isDefaultAuth)
-                return Results.Ok(ConfigResolver.Instance.SetDefaultSetting( env, app, body ));
-            else
-                return Results.Ok(false);
-
+            
+            return Results.Ok(ConfigResolver.Instance.SetDefaultSetting( env, app, isDefaultAuth, body ));
+            
             //var section = body.Section;
             //var variable = body.Variable;
             //var val = body.Value;

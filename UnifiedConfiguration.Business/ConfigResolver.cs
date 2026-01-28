@@ -28,13 +28,8 @@ namespace UnifiedConfiguration.Business
         }
 
         public SectionResult GetSectionSettings(string env, string app, string mod, string section, string buildNumber, string uid)
-        {
-            //var env = User.FindFirstValue( UcsClaimTypes.Enviornment );
-            //var app = User.FindFirstValue( UcsClaimTypes.Application );
-            //var mod = User.FindFirstValue( UcsClaimTypes.Module );
-            //var ver = User.FindFirstValue( UcsClaimTypes.BuildNumber );            
-            //var uid = User.FindFirstValue( UcsClaimTypes.UserId );
-            var ver = buildNumber; // ?? User.FindFirstValue( UcsClaimTypes.BuildNumber );
+        {           
+            var ver = buildNumber; 
 
             var dataSet = ConfigDatabase.Instance.ExecuteDataSet("dbo.UCS_GetSectionSettings",env, section, app, ver.ToInt(), mod, uid );
 
@@ -61,6 +56,14 @@ namespace UnifiedConfiguration.Business
             };
         }
 
+        /// <summary>
+        /// Gets for all builds all users .. basically unfiltered aside from env, app and mod
+        /// </summary>
+        /// <param name="env"></param>
+        /// <param name="app"></param>
+        /// <param name="mod"></param>
+        /// <param name="section"></param>
+        /// <returns></returns>
         public SectionResult GetSectionSettingsAllBuilds(string env, string app, string mod, string section)
         {
             var dataSet = ConfigDatabase.Instance.ExecuteDataSet("dbo.UCS_GetSectionSettingsAllBuilds",env, section, app,  mod  );
@@ -114,12 +117,13 @@ namespace UnifiedConfiguration.Business
         }
 
 
-        public bool SetUserSetting(string env, string app, string uid,  SettingSetRequest body)
+        public bool SetUserSetting(string env, string app, SettingSetRequest body)
         {
             var section = body.Section;
             var variable = body.Variable;
             var val = body.Value;
             var ver = body.BuildNumber;
+            var uid = body.UserId;
 
             ConfigDatabase.Instance.ExecuteNonQuery( "dbo.UCS_SetUserSetting",
                                                         env,
@@ -134,22 +138,15 @@ namespace UnifiedConfiguration.Business
             return true;
         }
 
-        public bool SetDefaultSetting(string env, string app,  [FromBody] SettingSetRequest body)
+        public bool SetDefaultSetting(string env, string app,bool isDefaultAuth , [FromBody] SettingSetRequest body)
         {
-            //var env = User.FindFirstValue( UcsClaimTypes.Enviornment );
-            //var app = User.FindFirstValue( UcsClaimTypes.Application );
-            //var mod = User.FindFirstValue( UcsClaimTypes.Module );
-            //var ver = User.FindFirstValue( UcsClaimTypes.BuildNumber );
-            //var isDefaultAuth = User.FindFirstValue( UcsClaimTypes.IsDefaultAuth )?.ToBool()??false;
-
-
             var section = body.Section;
             var variable = body.Variable;
             var val = body.Value;
             var ver = body.BuildNumber ;
             var mod = body.Module;
 
-            //if (isDefaultAuth )
+            if (isDefaultAuth )
             {
                 ConfigDatabase.Instance.ExecuteNonQuery( "dbo.UCS_SetDefaultSetting",
                                                             env,
@@ -158,10 +155,10 @@ namespace UnifiedConfiguration.Business
                                                             app,
                                                             ver.ToInt(),
                                                             mod,
-                                                            val );
-                return true ;
+                                                            val );                
             }
-
+            return isDefaultAuth;
+                
         }
 
     }

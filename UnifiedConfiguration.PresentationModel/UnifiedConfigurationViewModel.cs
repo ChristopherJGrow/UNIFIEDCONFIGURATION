@@ -36,7 +36,8 @@ namespace UnifiedConfiguration.PresentationModel
         DEV,
         QA,
         UAT,
-        PROD
+        PROD,
+        SELFTEST // used for code that tests the services themselves
     }
 
     public class UnifiedConfigurationViewModel : CWindowViewModelBase
@@ -72,6 +73,15 @@ namespace UnifiedConfiguration.PresentationModel
             
             string sid = WindowsIdentity.GetCurrent().User?.Value!;
             this._UserId = sid;
+
+            var groups = WindowsIdentity.GetCurrent().Groups;
+            Debug.WriteLine( "Groups" );
+            foreach(var item in groups.OfType<IdentityReference>())
+            {
+                Debug.WriteLine(item.Value);
+            }
+
+
             //this.Environment = "DEV";
             this._Application = "IMS";
 
@@ -296,15 +306,26 @@ namespace UnifiedConfiguration.PresentationModel
 
         List<GridItemViewModel> _ItemSourceCache = new List<GridItemViewModel>();
 
+        string _EnviornmentLast=string.Empty;
+        string _ApplicationLast=string.Empty;
+        string _ModuleLast = string.Empty;        
+        
         public async Task ItemsLoadFromRestToCache()
         {
             
             this._ItemSourceCache.Clear();
 
-            
-            // Aloways create a new token because it holds the context with what Module, and Application your using 
-            //
-            this.IsAppAdmin = await this.Proxy.TokenCreateAsync( this.EnvironmentSelection.ToStringFast(), this.Application, this.Module,/* this.BuildNumber,*/ this.UserId );
+            if ( this._EnvironmentSelection.ToString() != this._EnviornmentLast ||
+                 this._Application != this._Application ||
+                 this._Module != this._ModuleLast )
+            {
+                // Aloways create a new token because it holds the context with what Module, and Application your using 
+                //
+                this.IsAppAdmin = await this.Proxy.TokenCreateAsync( this.EnvironmentSelection.ToStringFast(), this.Application, this.Module,/* this.BuildNumber,*/ this.UserId );
+                this._EnviornmentLast = this._EnvironmentSelection.ToStringFast();
+                this._ApplicationLast = this._Application;
+                this._ModuleLast = this._Module;
+            }
 
             //this.IsAppAdmin = await this.Proxy.IsDefaultAuthorizedAsync();
 
