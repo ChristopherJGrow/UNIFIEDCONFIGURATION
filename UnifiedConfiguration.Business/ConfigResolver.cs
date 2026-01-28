@@ -100,20 +100,35 @@ namespace UnifiedConfiguration.Business
 
             // If the setting is coming from the user row, IsUserOverride = 1 and OverridingUserId = @UserId.
             // If it’s coming from the shared/ default, IsUserOverride = 0 and OverridingUserId = NULL.
-
+           
             DataTable table = dataSet.Tables[0];
-
-            var retval = new SettingGetResult()
+            if (table.Rows.Count > 0)
             {
-                Variable = variable,
-                Value = table.Rows[0].GetField("Value",""),
-                OverridingUserId = table.Rows[0].GetField("OverridingUserId",""),
-                IsUserOverride = table.Rows[0].GetField("IsUserOverride",false),
-                EffectiveBuildNumber = table.Rows[0].GetField("EffectiveBuildNumber",""),
-                EffectiveModule = table.Rows[0].GetField("EffectiveModule",""),
+                return new SettingGetResult()
+                {
+                    Variable = variable,
+                    Value = table.Rows[0].GetField("Value",""),
+                    OverridingUserId = table.Rows[0].GetField("OverridingUserId",""),
+                    IsUserOverride = table.Rows[0].GetField("IsUserOverride",false),
+                    EffectiveBuildNumber = table.Rows[0].GetField("EffectiveBuildNumber",""),
+                    EffectiveModule = table.Rows[0].GetField("EffectiveModule",""),
 
-            };
-            return retval;
+                };
+            }
+            else
+            {
+                return new SettingGetResult()
+                {
+                    Variable = variable,
+                    Value = "" ,
+                    OverridingUserId = "",
+                    IsUserOverride =  false ,
+                    EffectiveBuildNumber = "" ,
+                    EffectiveModule = "",
+                };
+
+            }
+            
         }
 
 

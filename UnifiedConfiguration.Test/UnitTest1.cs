@@ -13,76 +13,13 @@ using UnifiedConfiguration.Business;
 
 using static Config.Core.DatabaseBase;
 
+[assembly: CollectionBehavior( DisableTestParallelization = true )]
+
 namespace UnifiedConfiguration.Test
 {
-    public sealed class UcsSelfTestScope : IDisposable
-    {
-        public const string Env = "SelfTest";
-        public const string App = "____SelfTestApp";
-        public const string Mod = "____SelfTestModule";
-        public const string Section = "General";
 
-        public static string UserA { get; } = "S-1-5-21-SELFTEST-USER-A";
-        public static string UserB { get; } = "S-1-5-21-SELFTEST-USER-B";
 
-        public UcsSelfTestScope()
-        {
-            // Clean slate before each test (handles prior failed runs)
-            Cleanup();
-        }
-
-        public void Cleanup()
-        {
-            // Defaults in the sproc are SelfTest/App/Module, but pass explicitly if you prefer.
-            ConfigDatabase.Instance.ExecuteNonQuery( "dbo.UCS_SelfTestCleanup", Env, App, Mod );
-            // If your sproc has defaults and takes no params:
-            // ConfigDatabase.Instance.ExecuteNonQuery("dbo.UCS_SelfTestCleanup");
-        }
-
-        public void Dispose()
-        {
-            Cleanup();
-        }
-    }
-
-    public sealed class UcsTestSeeder
-    {
-        private readonly ConfigResolver _ucs;
-        private readonly string _env;
-        private readonly string _app;
-
-        public UcsTestSeeder(ConfigResolver ucs, string env, string app)
-        {
-            _ucs = ucs;
-            _env = env;
-            _app = app;
-        }
-
-        public void SetDefault(string section, string variable, string value, int build, string module)
-        {
-            _ucs.SetDefaultSetting( _env, _app, isDefaultAuth: true, new SettingSetRequest
-            {
-                Section = section,
-                Variable = variable,
-                Value = value,
-                BuildNumber = build.ToString(),
-                Module = module
-            } );
-        }
-
-        public void SetUser(string section, string variable, string value, int build, string module, string userId)
-        {
-            _ucs.SetUserSetting( _env, _app, new SettingSetRequest
-            {
-                Section = section,
-                Variable = variable,
-                Value = value,
-                BuildNumber = build.ToString(),
-                Module = module,
-                UserId = userId
-            } );
-        }
-    }
+   
 
     public class UnitTest1
     {
@@ -172,6 +109,62 @@ namespace UnifiedConfiguration.Test
 
             Assert.Contains( "Network", sections.Sections );
         }
+
+        [Fact]
+        public void GetSetting_BuildNumber_SelectsCorrectBuild()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b100", build: 100, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b200", build: 200, module: UcsSelfTestScope.Mod );
+
+            var got100 = ucs.GetSetting(UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,UcsSelfTestScope.Section, "ApiUrl", "100", UcsSelfTestScope.UserA);
+
+            var got200 = ucs.GetSetting(UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,UcsSelfTestScope.Section, "ApiUrl", "200", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "https://b100", got100.Value );
+            Assert.Equal( "https://b200", got200.Value );
+        }
+
+        [Fact]
+        public void GetSectionSettings_ReturnsAllVariablesInSection()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "A", "1", build: 1, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "B", "2", build: 1, module: UcsSelfTestScope.Mod );
+
+            var section = ucs.GetSectionSettings(UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+        UcsSelfTestScope.Section, buildNumber: "1", uid: UcsSelfTestScope.UserA);
+
+            Assert.Contains( section.Settings, s => s.Variable == "A" && s.Value == "1" );
+            Assert.Contains( section.Settings, s => s.Variable == "B" && s.Value == "2" );
+        }
+
+        [Fact]
+        public void GetSetting_WhenMissing_ReturnsEmptyOrThrowsPredictably()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+
+            // Depending on your desired behavior:
+            var got = ucs.GetSetting(UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+        UcsSelfTestScope.Section, "DoesNotExist", "1", UcsSelfTestScope.UserA);
+
+            // If you return empty:
+            Assert.Equal( "", got.Value );
+        }
+
+
+
+
     }
 }
 
