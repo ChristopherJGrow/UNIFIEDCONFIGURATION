@@ -163,7 +163,101 @@ namespace UnifiedConfiguration.Test
         }
 
 
+        [Fact]
+        public void GetSetting_Build_ExactMatch_Wins()
+        {
+            using var _ = new UcsSelfTestScope();
 
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b100", build: 100, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b200", build: 200, module: UcsSelfTestScope.Mod );
+
+            var got = ucs.GetSetting(
+        UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+        UcsSelfTestScope.Section, "ApiUrl", "200", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "https://b200", got.Value );
+            Assert.Equal( "200", got.EffectiveBuildNumber ); // if your sproc returns this
+        }
+
+        [Fact]
+        public void GetSetting_Build_NoExactMatch_UsesHighestLowerOrEqual()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b100", build: 100, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b200", build: 200, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b350", build: 350, module: UcsSelfTestScope.Mod );
+
+            // Ask for 300 -> should pick 200 (highest <= 300)
+            var got = ucs.GetSetting(
+        UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+        UcsSelfTestScope.Section, "ApiUrl", "300", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "https://b200", got.Value );
+            Assert.Equal( "200", got.EffectiveBuildNumber ); // if returned
+        }
+
+        [Fact]
+        public void GetSetting_Build_RequestedLowerThanAnyDefined_FallsBackToBuildZero()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            // Only build 0 and build 100 exist
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b0", build: 0, module: UcsSelfTestScope.Mod );
+            seed.SetDefault( UcsSelfTestScope.Section, "ApiUrl", "https://b100", build: 100, module: UcsSelfTestScope.Mod );
+
+            // Ask for build 50 -> should pick build 0
+            var got = ucs.GetSetting(
+        UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+        UcsSelfTestScope.Section, "ApiUrl", "50", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "https://b0", got.Value );
+            Assert.Equal( "0", got.EffectiveBuildNumber ); // if returned
+        }
+        [Fact]
+        public void GetSetting_UserOverride_OnlyAppliesToExactBuild()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "Theme", "Light", build: 200, module: UcsSelfTestScope.Mod );
+            seed.SetUser( UcsSelfTestScope.Section, "Theme", "Dark", build: 0, module: UcsSelfTestScope.Mod, userId: UcsSelfTestScope.UserA );
+
+            var got = ucs.GetSetting(   UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+                                        UcsSelfTestScope.Section, "Theme", "200", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "Light", got.Value );
+            Assert.False( got.IsUserOverride );
+        }
+        [Fact]
+        public void GetSetting_UserOverride_Wins_WhenBuildMatches()
+        {
+            using var _ = new UcsSelfTestScope();
+
+            var ucs = ConfigResolver.Instance;
+            var seed = new UcsTestSeeder(ucs, UcsSelfTestScope.Env, UcsSelfTestScope.App);
+
+            seed.SetDefault( UcsSelfTestScope.Section, "Theme", "Light", build: 200, module: UcsSelfTestScope.Mod );
+            seed.SetUser( UcsSelfTestScope.Section, "Theme", "Dark", build: 200, module: UcsSelfTestScope.Mod, userId: UcsSelfTestScope.UserA );
+
+            var got = ucs.GetSetting(UcsSelfTestScope.Env, UcsSelfTestScope.App, UcsSelfTestScope.Mod,
+                                        UcsSelfTestScope.Section, "Theme", "200", UcsSelfTestScope.UserA);
+
+            Assert.Equal( "Dark", got.Value );
+            Assert.True( got.IsUserOverride );
+            Assert.Equal( UcsSelfTestScope.UserA, got.OverridingUserId );
+        }
 
     }
 }
