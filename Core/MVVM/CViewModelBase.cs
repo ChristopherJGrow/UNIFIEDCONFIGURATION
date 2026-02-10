@@ -80,7 +80,7 @@ namespace Config.Core.MVVM//UnifiedConfiguration.PresentationModel
         /// <param name="myValue"></param>
         protected virtual void OnPropertyChanged(Action fChange, [CallerMemberName] string propertyName = null)
         {            
-            fChange();
+            fChange?.Invoke();
             this.OnPropertyChanged( new PropertyChangedEventArgs( propertyName ) );
         }
 
@@ -89,7 +89,7 @@ namespace Config.Core.MVVM//UnifiedConfiguration.PresentationModel
         /// This allows you to change the property in the fChange only if fIsDifferent is true
         /// Example:
         /// 
-        /// set => this.PropertyChange( ()=> this.Text != value,  () => this.Text = value );
+        /// set => this.PropertyChange( ()=> this._Text != value,  () => this._Text = value );
         /// 
         /// </summary>
         /// <param name="fIsDifferent"></param>
@@ -98,10 +98,10 @@ namespace Config.Core.MVVM//UnifiedConfiguration.PresentationModel
         protected virtual bool OnPropertyChanged(Func<bool> fIsDifferent, Action fChange, [CallerMemberName] string propertyName = null)
         {
             bool retval = false;
-            if (fIsDifferent())
+            if (fIsDifferent!=null && fIsDifferent())
             {
                 retval = true;
-                fChange();
+                fChange?.Invoke();
                 this.OnPropertyChanged( new PropertyChangedEventArgs( propertyName ) );
             }
             else
