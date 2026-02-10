@@ -66,6 +66,8 @@ namespace Config.Core.WPF
             return true;
         }
 
+        
+
         // We dont want this being overloaded so it is not virtual on purpose.
         // Overload ExecuteSafe
         public virtual void Execute(object obj)
@@ -75,7 +77,14 @@ namespace Config.Core.WPF
                 // This is all because CanExecute is flat broke but not a big deal
                 //
                 if (this.IsEnabled)
-                    this.ExecuteSafe( obj );
+                {
+                    var prevEnabled = this.IsEnabled;
+                    using (_ = new Using( () => this.IsEnabled = false, () => this.IsEnabled = prevEnabled ))
+                    {
+                        this.ExecuteSafe( obj );
+                    }
+                }
+
             }
             catch (Exception ex)
             {

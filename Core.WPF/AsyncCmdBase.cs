@@ -1,4 +1,5 @@
-﻿using Config.Core.WPF;
+﻿using Config.Core.Extensions;
+using Config.Core.WPF;
 
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,19 @@ namespace Config.Core.WPF
         /// If true, command disables itself while running (prevents double-click reentrancy).
         /// </summary>
         protected virtual bool DisableWhileExecuting => true;
+        
+        public override void Execute(object obj)
+        {
+            try
+            {               
+                this.ExecuteSafe( obj );
+            }
+            catch (Exception ex)
+            {
+                this.LastError = ex;
+                Console.WriteLine( $"CmdBase.Execute Exception: {ex.ToStringFull()} " );
+            }
+        }
 
         /// <summary>
         /// If false, re-entrancy allowed (rarely what you want).
@@ -63,6 +77,9 @@ namespace Config.Core.WPF
                     OnCanExecuteChanged( EventArgs.Empty );
                 }
 
+                // Let WPF pump input/rendering before the real work begins.
+                await Task.Yield();
+
                 await ExecuteSafeAsync( obj );
             }
             catch (Exception ex)
@@ -71,7 +88,7 @@ namespace Config.Core.WPF
                 LastError = ex;
                 Console.WriteLine( $"AsyncCmdBase.Execute exception: {ex}" );
                 // optionally: call an overridable hook
-                OnAsyncException( ex, obj );
+                OnAsyncException( ex, obj );                
             }
             finally
             {
